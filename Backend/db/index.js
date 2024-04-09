@@ -1,4 +1,4 @@
-const mongoose=rquire('mongoose');
+const mongoose=require('mongoose');
 
 mongoose.connect('mongodb+srv://sakanchha111:RHCk0rt5sBKHID7H@cluster3.pasbi7b.mongodb.net/TrackEasy');
 
@@ -12,9 +12,9 @@ const todoSchema=new mongoose.Schema({
 })
 
 const User=mongoose.model('User',UserSchema);
-const todo=mongoose.model('Todo',todoSchema);
+const Todo=mongoose.model('Todo',todoSchema);
 
 module.exports={
     User,
-    todo
+    Todo
 }
