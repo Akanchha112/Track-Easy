@@ -3,19 +3,16 @@ const {Userzod, createtodozod, updatetodo} =require('./types');
 const {User,Todo}= require('./db');
 const jwt=require('jsonwebtoken');
 const app=express();
+const cors=require( 'cors' );
 const usermiddleware=require ('./middleware/user');
 app.use(express.json());
-// app.use(bodyParser.json());
+app.use(cors());
 
 app.post('/signup',(req, res)=>{
     const username = req.headers.username;
     const password = req.headers.password;
     console.log(`Signup request received with username=${username} and password=${password}`);
-    // const parse = Userzod.parse(username, password);
-    // if (!parse.success) {
-    //     console.log(`Signup failed: ${JSON.stringify(parse.error)}`);
-    //     return res.status(411).json(parse.error);
-    //   }
+    
     //add user to database
     User.create({
         username,
@@ -40,6 +37,7 @@ app.post('/signin',async (req, res)=>{
         username:username,
         password:password
     });
+    console.log(response._id);
     if(response){
         const token=jwt.sign(userjwt,'secretkey');
         res.header('authorizaton',token).json({
@@ -53,27 +51,37 @@ app.post('/signin',async (req, res)=>{
 })
 
 
-app.post('/todo',usermiddleware,(req, res)=>{
-    const title=req.body.title;
-    const description=req.body.description;
-    // const parse=Userzod.parse(title,description);
-    // if (!parse.success) {
-    //     console.log(`Signup failed: ${JSON.stringify(parse.error)}`);
-    //     return res.status(411).json(parse.error);
-    //   }
-    //add todo to database
-    Todo.create({
-        title,
-        description
-    })
-    res.json({msg:'User created Successfully'});
-})
+app.post('/todo', usermiddleware, async (req, res) => {
+    try {
+        const title = req.body.title;
+        const description = req.body.description;
+        const user= await User.findOne({username:req.username}); 
+        // Add todo to database
+        // console.log("Inside todo ",req.username,user)
+        await Todo.create({
+            title,
+            description,
+            user: user._id
+        });
+
+        res.status(200).json({ msg: 'Todo created Successfully' });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ msg: 'Internal Server Error' });
+    }
+});
 
 
 app.get('/todos',usermiddleware,async (req, res)=>{
-    const todos=await Todo.find({});
-    res.json({
+    console.log(req);
+    const username=req.username;
+    const user=await User.findOne({username:username});
+    console.log("Inside todos=> ",user);
+
+    const todos=await Todo.find({ user: user._id});
+    res.status(200).json({
         todos:todos
+        // response:response._id
     })
 })
 
@@ -93,4 +101,4 @@ app.delete('/delete',usermiddleware,async (req, res)=>{
 })
 
 
-app.listen(3000,()=>{console.log("Server is running")});
+app.listen(3001,()=>{console.log("Server is running")});
